@@ -2,7 +2,6 @@ package moze_intel.projecte.gameObjs.items;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.api.capabilities.item.IAlchBagItem;
@@ -13,7 +12,6 @@ import moze_intel.projecte.capability.AlchChestItemCapabilityWrapper;
 import moze_intel.projecte.capability.PedestalItemCapabilityWrapper;
 import moze_intel.projecte.config.ProjectEConfig;
 import moze_intel.projecte.gameObjs.items.rings.PEToggleItem;
-import moze_intel.projecte.gameObjs.tiles.AlchChestTile;
 import moze_intel.projecte.gameObjs.tiles.DMPedestalTile;
 import moze_intel.projecte.handlers.InternalTimers;
 import moze_intel.projecte.integration.IntegrationHelper;
@@ -28,7 +26,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -38,143 +35,145 @@ import net.minecraftforge.items.IItemHandler;
 
 public class RepairTalisman extends ItemPE implements IAlchBagItem, IAlchChestItem, IPedestalItem {
 
-	public RepairTalisman(Properties props) {
-		super(props);
-		addItemCapability(AlchBagItemCapabilityWrapper::new);
-		addItemCapability(AlchChestItemCapabilityWrapper::new);
-		addItemCapability(PedestalItemCapabilityWrapper::new);
-		addItemCapability(IntegrationHelper.CURIO_MODID, IntegrationHelper.CURIO_CAP_SUPPLIER);
-	}
+  public RepairTalisman(Properties props) {
+    super(props);
+    addItemCapability(AlchBagItemCapabilityWrapper::new);
+    addItemCapability(AlchChestItemCapabilityWrapper::new);
+    addItemCapability(PedestalItemCapabilityWrapper::new);
+    addItemCapability(IntegrationHelper.CURIO_MODID, IntegrationHelper.CURIO_CAP_SUPPLIER);
+  }
 
-	@Override
-	public void inventoryTick(@Nonnull ItemStack stack, World world, @Nonnull Entity entity, int par4, boolean par5) {
-		if (world.isRemote || !(entity instanceof PlayerEntity)) {
-			return;
-		}
-		PlayerEntity player = (PlayerEntity) entity;
-		player.getCapability(InternalTimers.CAPABILITY).ifPresent(timers -> {
-			timers.activateRepair();
-			if (timers.canRepair()) {
-				repairAllItems(player);
-			}
-		});
-	}
+  @Override
+  public void inventoryTick(@Nonnull ItemStack stack, World world, @Nonnull Entity entity, int par4, boolean par5) {
+    if (world.isRemote || !(entity instanceof PlayerEntity)) {
+      return;
+    }
+    PlayerEntity player = (PlayerEntity) entity;
+    player.getCapability(InternalTimers.CAPABILITY).ifPresent(timers -> {
+      timers.activateRepair();
+      if (timers.canRepair()) {
+        repairAllItems(player);
+      }
+    });
+  }
 
-	private void repairAllItems(PlayerEntity player) {
-		player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(inv -> repairInv(inv, player));
-		IItemHandler curios = PlayerHelper.getCurios(player);
-		if (curios != null) {
-			repairInv(curios, player);
-		}
-	}
+  private void repairAllItems(PlayerEntity player) {
+    player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(inv -> repairInv(inv, player));
+    IItemHandler curios = PlayerHelper.getCurios(player);
+    if (curios != null) {
+      repairInv(curios, player);
+    }
+  }
 
-	private void repairInv(IItemHandler inv, PlayerEntity player) {
-		for (int i = 0; i < inv.getSlots(); i++) {
-			ItemStack invStack = inv.getStackInSlot(i);
-			if (invStack.isEmpty() || invStack.getCapability(ProjectEAPI.MODE_CHANGER_ITEM_CAPABILITY).isPresent() || !invStack.isRepairable()) {
-				continue;
-			}
-			if (invStack == player.getItemStackFromSlot(EquipmentSlotType.MAINHAND) && player.isSwingInProgress) {
-				//Don't repair item that is currently used by the player.
-				continue;
-			}
-			if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
-				invStack.setDamage(invStack.getDamage() - 1);
-			}
-		}
-	}
+  private void repairInv(IItemHandler inv, PlayerEntity player) {
+    for (int i = 0; i < inv.getSlots(); i++) {
+      ItemStack invStack = inv.getStackInSlot(i);
+      if (invStack.isEmpty() || invStack.getCapability(ProjectEAPI.MODE_CHANGER_ITEM_CAPABILITY).isPresent() || !invStack.isRepairable()) {
+        continue;
+      }
+      if (invStack == player.getItemStackFromSlot(EquipmentSlotType.MAINHAND) && player.isSwingInProgress) {
+        //Don't repair item that is currently used by the player.
+        continue;
+      }
+      if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
+        invStack.setDamage(invStack.getDamage() - 1);
+      }
+    }
+  }
 
-	@Override
-	public void updateInPedestal(@Nonnull World world, @Nonnull BlockPos pos) {
-		if (!world.isRemote && ProjectEConfig.server.cooldown.pedestal.repair.get() != -1) {
-			DMPedestalTile tile = (DMPedestalTile) world.getTileEntity(pos);
-			if (tile.getActivityCooldown() == 0) {
-				world.getEntitiesWithinAABB(ServerPlayerEntity.class, tile.getEffectBounds()).forEach(this::repairAllItems);
-				tile.setActivityCooldown(ProjectEConfig.server.cooldown.pedestal.repair.get());
-			} else {
-				tile.decrementActivityCooldown();
-			}
-		}
-	}
+  @Override
+  public void updateInPedestal(@Nonnull World world, @Nonnull BlockPos pos) {
+    if (!world.isRemote && ProjectEConfig.server.cooldown.pedestal.repair.get() != -1) {
+      DMPedestalTile tile = (DMPedestalTile) world.getTileEntity(pos);
+      if (tile.getActivityCooldown() == 0) {
+        world.getEntitiesWithinAABB(ServerPlayerEntity.class, tile.getEffectBounds()).forEach(this::repairAllItems);
+        tile.setActivityCooldown(ProjectEConfig.server.cooldown.pedestal.repair.get());
+      }
+      else {
+        tile.decrementActivityCooldown();
+      }
+    }
+  }
 
-	@Nonnull
-	@Override
-	public List<ITextComponent> getPedestalDescription() {
-		List<ITextComponent> list = new ArrayList<>();
-		if (ProjectEConfig.server.cooldown.pedestal.repair.get() != -1) {
-			list.add(PELang.PEDESTAL_REPAIR_TALISMAN_1.translateColored(TextFormatting.BLUE));
-			list.add(PELang.PEDESTAL_REPAIR_TALISMAN_2.translateColored(TextFormatting.BLUE, MathUtils.tickToSecFormatted(ProjectEConfig.server.cooldown.pedestal.repair.get())));
-		}
-		return list;
-	}
+  @Nonnull
+  @Override
+  public List<ITextComponent> getPedestalDescription() {
+    List<ITextComponent> list = new ArrayList<>();
+    if (ProjectEConfig.server.cooldown.pedestal.repair.get() != -1) {
+      list.add(PELang.PEDESTAL_REPAIR_TALISMAN_1.translateColored(TextFormatting.BLUE));
+      list.add(PELang.PEDESTAL_REPAIR_TALISMAN_2.translateColored(TextFormatting.BLUE, MathUtils.tickToSecFormatted(ProjectEConfig.server.cooldown.pedestal.repair.get())));
+    }
+    return list;
+  }
 
-	@Override
-	public void updateInAlchChest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull ItemStack stack) {
-		if (world.isRemote) {
-			return;
-		}
-		TileEntity te = world.getTileEntity(pos);
-		if (!(te instanceof AlchChestTile)) {
-			return;
-		}
-		AlchChestTile tile = (AlchChestTile) te;
-		CompoundNBT nbt = stack.getOrCreateTag();
-		byte coolDown = nbt.getByte(Constants.NBT_KEY_COOLDOWN);
-		if (coolDown > 0) {
-			nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) (coolDown - 1));
-		} else {
-			boolean hasAction = false;
-			Optional<IItemHandler> cap = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).resolve();
-			if (cap.isPresent()) {
-				IItemHandler inv = cap.get();
-				for (int i = 0; i < inv.getSlots(); i++) {
-					ItemStack invStack = inv.getStackInSlot(i);
-					if (invStack.isEmpty() || invStack.getItem() instanceof PEToggleItem || !invStack.getItem().isRepairable(invStack)) {
-						continue;
-					}
-					if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
-						invStack.setDamage(invStack.getDamage() - 1);
-						if (!hasAction) {
-							hasAction = true;
-						}
-					}
-				}
-				if (hasAction) {
-					nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) 19);
-					tile.markDirty();
-				}
-			}
-		}
-	}
+  @Override
+  public void updateInAlchChest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull ItemStack stack) {
+    //		if (world.isRemote) {
+    //			return;
+    //		}
+    //		TileEntity te = world.getTileEntity(pos);
+    //		if (!(te instanceof AlchChestTile)) {
+    //			return;
+    //		}
+    //		AlchChestTile tile = (AlchChestTile) te;
+    //		CompoundNBT nbt = stack.getOrCreateTag();
+    //		byte coolDown = nbt.getByte(Constants.NBT_KEY_COOLDOWN);
+    //		if (coolDown > 0) {
+    //			nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) (coolDown - 1));
+    //		} else {
+    //			boolean hasAction = false;
+    //			Optional<IItemHandler> cap = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).resolve();
+    //			if (cap.isPresent()) {
+    //				IItemHandler inv = cap.get();
+    //				for (int i = 0; i < inv.getSlots(); i++) {
+    //					ItemStack invStack = inv.getStackInSlot(i);
+    //					if (invStack.isEmpty() || invStack.getItem() instanceof PEToggleItem || !invStack.getItem().isRepairable(invStack)) {
+    //						continue;
+    //					}
+    //					if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
+    //						invStack.setDamage(invStack.getDamage() - 1);
+    //						if (!hasAction) {
+    //							hasAction = true;
+    //						}
+    //					}
+    //				}
+    //				if (hasAction) {
+    //					nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) 19);
+    //					tile.markDirty();
+    //				}
+    //			}
+    //		}
+  }
 
-	@Override
-	public boolean updateInAlchBag(@Nonnull IItemHandler inv, @Nonnull PlayerEntity player, @Nonnull ItemStack stack) {
-		if (player.getEntityWorld().isRemote) {
-			return false;
-		}
-		CompoundNBT nbt = stack.getOrCreateTag();
-		byte coolDown = nbt.getByte(Constants.NBT_KEY_COOLDOWN);
-		if (coolDown > 0) {
-			nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) (coolDown - 1));
-		} else {
-			boolean hasAction = false;
-			for (int i = 0; i < inv.getSlots(); i++) {
-				ItemStack invStack = inv.getStackInSlot(i);
-				if (invStack.isEmpty() || invStack.getItem() instanceof PEToggleItem || !invStack.getItem().isRepairable(invStack)) {
-					continue;
-				}
-				if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
-					invStack.setDamage(invStack.getDamage() - 1);
-					if (!hasAction) {
-						hasAction = true;
-					}
-				}
-			}
-			if (hasAction) {
-				nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) 19);
-				return true;
-			}
-		}
-		return false;
-	}
+  @Override
+  public boolean updateInAlchBag(@Nonnull IItemHandler inv, @Nonnull PlayerEntity player, @Nonnull ItemStack stack) {
+    if (player.getEntityWorld().isRemote) {
+      return false;
+    }
+    CompoundNBT nbt = stack.getOrCreateTag();
+    byte coolDown = nbt.getByte(Constants.NBT_KEY_COOLDOWN);
+    if (coolDown > 0) {
+      nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) (coolDown - 1));
+    }
+    else {
+      boolean hasAction = false;
+      for (int i = 0; i < inv.getSlots(); i++) {
+        ItemStack invStack = inv.getStackInSlot(i);
+        if (invStack.isEmpty() || invStack.getItem() instanceof PEToggleItem || !invStack.getItem().isRepairable(invStack)) {
+          continue;
+        }
+        if (ItemHelper.isDamageable(invStack) && invStack.getDamage() > 0) {
+          invStack.setDamage(invStack.getDamage() - 1);
+          if (!hasAction) {
+            hasAction = true;
+          }
+        }
+      }
+      if (hasAction) {
+        nbt.putByte(Constants.NBT_KEY_COOLDOWN, (byte) 19);
+        return true;
+      }
+    }
+    return false;
+  }
 }

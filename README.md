@@ -17,7 +17,6 @@ Please try the latest release build before reporting, be sure to also include an
 https://www.curseforge.com/minecraft/mc-mods/projecte/files
 
 # Support Development
-![](/patreon.png?raw=true)
 
 We accept donations via Patreon, visit the team members section to learn more.
 

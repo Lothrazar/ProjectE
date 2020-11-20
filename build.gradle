@@ -179,6 +179,10 @@ repositories {
         name 'HWYLA'
         url "https://maven.tehnut.info"
     }
+	maven { url = "https://modmaven.k-4u.nl/"  }
+	maven { url = "https://maven.theillusivec4.top/"    }
+	maven { url = "http://maven.mcmoddev.com/"    }
+    maven { url = "http://minecraft.curseforge.com/api/maven/"  }
 }
 
 test {

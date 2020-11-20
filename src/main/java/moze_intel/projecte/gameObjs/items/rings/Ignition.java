@@ -13,7 +13,6 @@ import moze_intel.projecte.gameObjs.items.IFireProtector;
 import moze_intel.projecte.gameObjs.tiles.DMPedestalTile;
 import moze_intel.projecte.integration.IntegrationHelper;
 import moze_intel.projecte.utils.Constants;
-import moze_intel.projecte.utils.EMCHelper;
 import moze_intel.projecte.utils.MathUtils;
 import moze_intel.projecte.utils.WorldHelper;
 import moze_intel.projecte.utils.text.PELang;
@@ -35,85 +34,86 @@ import net.minecraft.world.World;
 
 public class Ignition extends PEToggleItem implements IPedestalItem, IFireProtector, IProjectileShooter {
 
-	public Ignition(Properties props) {
-		super(props);
-		addItemCapability(PedestalItemCapabilityWrapper::new);
-		addItemCapability(ProjectileShooterItemCapabilityWrapper::new);
-		addItemCapability(IntegrationHelper.CURIO_MODID, IntegrationHelper.CURIO_CAP_SUPPLIER);
-	}
+  public Ignition(Properties props) {
+    super(props);
+    addItemCapability(PedestalItemCapabilityWrapper::new);
+    addItemCapability(ProjectileShooterItemCapabilityWrapper::new);
+    addItemCapability(IntegrationHelper.CURIO_MODID, IntegrationHelper.CURIO_CAP_SUPPLIER);
+  }
 
-	@Override
-	public void inventoryTick(@Nonnull ItemStack stack, World world, @Nonnull Entity entity, int inventorySlot, boolean held) {
-		if (world.isRemote || inventorySlot > 8 || !(entity instanceof PlayerEntity)) {
-			return;
-		}
-		super.inventoryTick(stack, world, entity, inventorySlot, held);
-		ServerPlayerEntity player = (ServerPlayerEntity) entity;
-		CompoundNBT nbt = stack.getOrCreateTag();
-		if (nbt.getBoolean(Constants.NBT_KEY_ACTIVE)) {
-			if (getEmc(stack) == 0 && !consumeFuel(player, stack, 64, false)) {
-				nbt.putBoolean(Constants.NBT_KEY_ACTIVE, false);
-			} else {
-				WorldHelper.igniteNearby(world, player);
-				removeEmc(stack, EMCHelper.removeFractionalEMC(stack, 0.32F));
-			}
-		} else {
-			WorldHelper.extinguishNearby(world, player);
-		}
-	}
+  @Override
+  public void inventoryTick(@Nonnull ItemStack stack, World world, @Nonnull Entity entity, int inventorySlot, boolean held) {
+    if (world.isRemote || inventorySlot > 8 || !(entity instanceof PlayerEntity)) {
+      return;
+    }
+    super.inventoryTick(stack, world, entity, inventorySlot, held);
+    ServerPlayerEntity player = (ServerPlayerEntity) entity;
+    CompoundNBT nbt = stack.getOrCreateTag();
+    if (nbt.getBoolean(Constants.NBT_KEY_ACTIVE)) {
+      //			if (getEmc(stack) == 0 && !consumeFuel(player, stack, 64, false)) {
+      //				nbt.putBoolean(Constants.NBT_KEY_ACTIVE, false);
+      //			} else {
+      WorldHelper.igniteNearby(world, player);
+      //			}
+    }
+    else {
+      WorldHelper.extinguishNearby(world, player);
+    }
+  }
 
-	@Nonnull
-	@Override
-	public ActionResultType onItemUse(@Nonnull ItemUseContext ctx) {
-		return WorldHelper.igniteTNT(ctx);
-	}
+  @Nonnull
+  @Override
+  public ActionResultType onItemUse(@Nonnull ItemUseContext ctx) {
+    return WorldHelper.igniteTNT(ctx);
+  }
 
-	@Override
-	public void updateInPedestal(@Nonnull World world, @Nonnull BlockPos pos) {
-		if (!world.isRemote && ProjectEConfig.server.cooldown.pedestal.ignition.get() != -1) {
-			TileEntity te = world.getTileEntity(pos);
-			if (!(te instanceof DMPedestalTile)) {
-				return;
-			}
-			DMPedestalTile tile = (DMPedestalTile) te;
-			if (tile.getActivityCooldown() == 0) {
-				List<MobEntity> list = world.getEntitiesWithinAABB(MobEntity.class, tile.getEffectBounds());
-				for (MobEntity living : list) {
-					living.attackEntityFrom(DamageSource.IN_FIRE, 3.0F);
-					living.setFire(8);
-				}
-				tile.setActivityCooldown(ProjectEConfig.server.cooldown.pedestal.ignition.get());
-			} else {
-				tile.decrementActivityCooldown();
-			}
-		}
-	}
+  @Override
+  public void updateInPedestal(@Nonnull World world, @Nonnull BlockPos pos) {
+    if (!world.isRemote && ProjectEConfig.server.cooldown.pedestal.ignition.get() != -1) {
+      TileEntity te = world.getTileEntity(pos);
+      if (!(te instanceof DMPedestalTile)) {
+        return;
+      }
+      DMPedestalTile tile = (DMPedestalTile) te;
+      if (tile.getActivityCooldown() == 0) {
+        List<MobEntity> list = world.getEntitiesWithinAABB(MobEntity.class, tile.getEffectBounds());
+        for (MobEntity living : list) {
+          living.attackEntityFrom(DamageSource.IN_FIRE, 3.0F);
+          living.setFire(8);
+        }
+        tile.setActivityCooldown(ProjectEConfig.server.cooldown.pedestal.ignition.get());
+      }
+      else {
+        tile.decrementActivityCooldown();
+      }
+    }
+  }
 
-	@Nonnull
-	@Override
-	public List<ITextComponent> getPedestalDescription() {
-		List<ITextComponent> list = new ArrayList<>();
-		if (ProjectEConfig.server.cooldown.pedestal.ignition.get() != -1) {
-			list.add(PELang.PEDESTAL_IGNITION_1.translateColored(TextFormatting.BLUE));
-			list.add(PELang.PEDESTAL_IGNITION_2.translateColored(TextFormatting.BLUE, MathUtils.tickToSecFormatted(ProjectEConfig.server.cooldown.pedestal.ignition.get())));
-		}
-		return list;
-	}
+  @Nonnull
+  @Override
+  public List<ITextComponent> getPedestalDescription() {
+    List<ITextComponent> list = new ArrayList<>();
+    if (ProjectEConfig.server.cooldown.pedestal.ignition.get() != -1) {
+      list.add(PELang.PEDESTAL_IGNITION_1.translateColored(TextFormatting.BLUE));
+      list.add(PELang.PEDESTAL_IGNITION_2.translateColored(TextFormatting.BLUE, MathUtils.tickToSecFormatted(ProjectEConfig.server.cooldown.pedestal.ignition.get())));
+    }
+    return list;
+  }
 
-	@Override
-	public boolean shootProjectile(@Nonnull PlayerEntity player, @Nonnull ItemStack stack, Hand hand) {
-		World world = player.getEntityWorld();
-		if (world.isRemote) {
-			return false;
-		}
-		EntityFireProjectile fire = new EntityFireProjectile(player, world);
-		fire.func_234612_a_(player, player.rotationPitch, player.rotationYaw, 0, 1.5F, 1);
-		world.addEntity(fire);
-		return true;
-	}
+  @Override
+  public boolean shootProjectile(@Nonnull PlayerEntity player, @Nonnull ItemStack stack, Hand hand) {
+    World world = player.getEntityWorld();
+    if (world.isRemote) {
+      return false;
+    }
+    EntityFireProjectile fire = new EntityFireProjectile(player, world);
+    fire.func_234612_a_(player, player.rotationPitch, player.rotationYaw, 0, 1.5F, 1);
+    world.addEntity(fire);
+    return true;
+  }
 
-	@Override
-	public boolean canProtectAgainstFire(ItemStack stack, ServerPlayerEntity player) {
-		return true;
-	}
+  @Override
+  public boolean canProtectAgainstFire(ItemStack stack, ServerPlayerEntity player) {
+    return true;
+  }
 }

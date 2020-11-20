@@ -1,9 +1,9 @@
 package moze_intel.projecte.gameObjs.items.tools;
 
-import com.google.common.collect.Multimap;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import com.google.common.collect.Multimap;
 import moze_intel.projecte.capability.ModeChangerItemCapabilityWrapper;
 import moze_intel.projecte.config.ProjectEConfig;
 import moze_intel.projecte.gameObjs.EnumMatterType;
@@ -41,118 +41,115 @@ import net.minecraftforge.common.ToolType;
 
 public class PEMorningStar extends PETool implements IItemMode {
 
-	private final ILangEntry[] modeDesc;
+  private final ILangEntry[] modeDesc;
 
-	public PEMorningStar(EnumMatterType matterType, int numCharges, Properties props) {
-		super(matterType, 16, -3, numCharges, props
-				.addToolType(ToolType.PICKAXE, matterType.getHarvestLevel())
-				.addToolType(ToolType.SHOVEL, matterType.getHarvestLevel())
-				.addToolType(ToolHelper.TOOL_TYPE_HAMMER, matterType.getHarvestLevel())
-				.addToolType(ToolHelper.TOOL_TYPE_MORNING_STAR, matterType.getHarvestLevel()));
-		modeDesc = new ILangEntry[]{PELang.MODE_MORNING_STAR_1, PELang.MODE_MORNING_STAR_2, PELang.MODE_MORNING_STAR_3, PELang.MODE_MORNING_STAR_4};
-		addItemCapability(ModeChangerItemCapabilityWrapper::new);
-	}
+  public PEMorningStar(EnumMatterType matterType, int numCharges, Properties props) {
+    super(matterType, 16, -3, numCharges, props
+        .addToolType(ToolType.PICKAXE, matterType.getHarvestLevel())
+        .addToolType(ToolType.SHOVEL, matterType.getHarvestLevel())
+        .addToolType(ToolHelper.TOOL_TYPE_HAMMER, matterType.getHarvestLevel())
+        .addToolType(ToolHelper.TOOL_TYPE_MORNING_STAR, matterType.getHarvestLevel()));
+    modeDesc = new ILangEntry[] { PELang.MODE_MORNING_STAR_1, PELang.MODE_MORNING_STAR_2, PELang.MODE_MORNING_STAR_3, PELang.MODE_MORNING_STAR_4 };
+    addItemCapability(ModeChangerItemCapabilityWrapper::new);
+  }
 
-	@Override
-	public ILangEntry[] getModeLangEntries() {
-		return modeDesc;
-	}
+  @Override
+  public ILangEntry[] getModeLangEntries() {
+    return modeDesc;
+  }
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void addInformation(@Nonnull ItemStack stack, @Nullable World world, @Nonnull List<ITextComponent> tooltips, @Nonnull ITooltipFlag flags) {
-		super.addInformation(stack, world, tooltips, flags);
-		tooltips.add(getToolTip(stack));
-	}
+  @Override
+  @OnlyIn(Dist.CLIENT)
+  public void addInformation(@Nonnull ItemStack stack, @Nullable World world, @Nonnull List<ITextComponent> tooltips, @Nonnull ITooltipFlag flags) {
+    super.addInformation(stack, world, tooltips, flags);
+    tooltips.add(getToolTip(stack));
+  }
 
-	/**
-	 * Simple copy of {@link net.minecraft.item.PickaxeItem#canHarvestBlock(BlockState)}'s and {@link net.minecraft.item.ShovelItem#canHarvestBlock(BlockState)}
-	 * fallback/shortcut to allow the morning star to also mine all blocks of that type.
-	 *
-	 * This does not need any special overrides for {@link PEHammer}'s check as that check is the same as the one for {@link net.minecraft.item.PickaxeItem}.
-	 *
-	 * @implNote This method is overridden instead of {@link net.minecraftforge.common.extensions.IForgeItem#canHarvestBlock(ItemStack, BlockState)} so that it is used as
-	 * a fallback if {@link PETool#canHarvestBlock(ItemStack, BlockState)} does not find a matching tool/required level for the tool. As the default implementation that
-	 * gets used is one where the stack does not matter (which would be this)
-	 */
-	@Override
-	public boolean canHarvestBlock(BlockState state) {
-		//Note: These checks cover the need of overriding/shortcutting the destroy speed
-		//Shovel
-		Block block = state.getBlock();
-		if (block == Blocks.SNOW || block == Blocks.SNOW_BLOCK) {
-			return true;
-		}
-		//Pickaxe
-		Material material = state.getMaterial();
-		return material == Material.ROCK || material == Material.IRON || material == Material.ANVIL;
-	}
+  /**
+   * Simple copy of {@link net.minecraft.item.PickaxeItem#canHarvestBlock(BlockState)}'s and {@link net.minecraft.item.ShovelItem#canHarvestBlock(BlockState)} fallback/shortcut to allow the morning
+   * star to also mine all blocks of that type.
+   *
+   * This does not need any special overrides for {@link PEHammer}'s check as that check is the same as the one for {@link net.minecraft.item.PickaxeItem}.
+   *
+   * @implNote This method is overridden instead of {@link net.minecraftforge.common.extensions.IForgeItem#canHarvestBlock(ItemStack, BlockState)} so that it is used as a fallback if
+   *           {@link PETool#canHarvestBlock(ItemStack, BlockState)} does not find a matching tool/required level for the tool. As the default implementation that gets used is one where the stack does
+   *           not matter (which would be this)
+   */
+  @Override
+  public boolean canHarvestBlock(BlockState state) {
+    //Note: These checks cover the need of overriding/shortcutting the destroy speed
+    //Shovel
+    Block block = state.getBlock();
+    if (block == Blocks.SNOW || block == Blocks.SNOW_BLOCK) {
+      return true;
+    }
+    //Pickaxe
+    Material material = state.getMaterial();
+    return material == Material.ROCK || material == Material.IRON || material == Material.ANVIL;
+  }
 
-	@Override
-	public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull LivingEntity damaged, @Nonnull LivingEntity damager) {
-		ToolHelper.attackWithCharge(stack, damaged, damager, 1.0F);
-		return true;
-	}
+  @Override
+  public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull LivingEntity damaged, @Nonnull LivingEntity damager) {
+    ToolHelper.attackWithCharge(stack, damaged, damager, 1.0F);
+    return true;
+  }
 
-	@Override
-	public boolean onBlockDestroyed(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull BlockState state, @Nonnull BlockPos pos, @Nonnull LivingEntity living) {
-		ToolHelper.digBasedOnMode(stack, world, pos, living, Item::rayTrace);
-		return true;
-	}
+  @Override
+  public boolean onBlockDestroyed(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull BlockState state, @Nonnull BlockPos pos, @Nonnull LivingEntity living) {
+    ToolHelper.digBasedOnMode(stack, world, pos, living, Item::rayTrace);
+    return true;
+  }
 
-	@Nonnull
-	@Override
-	public ActionResultType onItemUse(ItemUseContext context) {
-		PlayerEntity player = context.getPlayer();
-		if (player == null) {
-			return ActionResultType.PASS;
-		}
-		Hand hand = context.getHand();
-		World world = context.getWorld();
-		BlockPos pos = context.getPos();
-		Direction sideHit = context.getFace();
-		BlockState state = world.getBlockState(pos);
-		//Order that it attempts to use the item:
-		// Till (Shovel), Vein (or AOE) mine gravel/clay, vein mine ore, AOE dig (if it is sand, dirt, or grass don't do depth)
-		return ToolHelper.performActions(ToolHelper.tillShovelAOE(context, 0),
-				() -> {
-					if (state.isIn(Tags.Blocks.GRAVEL) || state.getBlock() == Blocks.CLAY) {
-						if (ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
-							return ToolHelper.digAOE(world, player, hand, pos, sideHit, false, 0);
-						}
-						return ToolHelper.tryVeinMine(hand, player, pos, sideHit);
-					}
-					return ActionResultType.PASS;
-				}, () -> {
-					if (ItemHelper.isOre(state) && !ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
-						return ToolHelper.tryVeinMine(hand, player, pos, sideHit);
-					}
-					return ActionResultType.PASS;
-				}, () -> ToolHelper.digAOE(world, player, hand, pos, sideHit,
-						!(state.getBlock() instanceof GrassBlock) && !state.isIn(BlockTags.SAND) && !state.isIn(Tags.Blocks.DIRT), 0));
-	}
+  @Nonnull
+  @Override
+  public ActionResultType onItemUse(ItemUseContext context) {
+    PlayerEntity player = context.getPlayer();
+    if (player == null) {
+      return ActionResultType.PASS;
+    }
+    Hand hand = context.getHand();
+    World world = context.getWorld();
+    BlockPos pos = context.getPos();
+    Direction sideHit = context.getFace();
+    BlockState state = world.getBlockState(pos);
+    //Order that it attempts to use the item:
+    // Till (Shovel), Vein (or AOE) mine gravel/clay, vein mine ore, AOE dig (if it is sand, dirt, or grass don't do depth)
+    return ToolHelper.performActions(ToolHelper.tillShovelAOE(context, 0),
+        () -> {
+          if (state.isIn(Tags.Blocks.GRAVEL) || state.getBlock() == Blocks.CLAY) {
+            if (ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
+              return ToolHelper.digAOE(world, player, hand, pos, sideHit, false, 0);
+            }
+            return ToolHelper.tryVeinMine(hand, player, pos, sideHit);
+          }
+          return ActionResultType.PASS;
+        }, () -> {
+          if (ItemHelper.isOre(state) && !ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
+            return ToolHelper.tryVeinMine(hand, player, pos, sideHit);
+          }
+          return ActionResultType.PASS;
+        }, () -> ToolHelper.digAOE(world, player, hand, pos, sideHit,
+            !(state.getBlock() instanceof GrassBlock) && !state.isIn(BlockTags.SAND) && !state.isIn(Tags.Blocks.DIRT), 0));
+  }
 
-	@Nonnull
-	@Override
-	public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull PlayerEntity player, @Nonnull Hand hand) {
-		ItemStack stack = player.getHeldItem(hand);
-		if (ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
-			return ItemHelper.actionResultFromType(ToolHelper.mineOreVeinsInAOE(player, hand), stack);
-		}
-		return ActionResult.resultPass(stack);
-	}
+  @Nonnull
+  @Override
+  public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull PlayerEntity player, @Nonnull Hand hand) {
+    ItemStack stack = player.getHeldItem(hand);
+    if (ProjectEConfig.server.items.pickaxeAoeVeinMining.get()) {
+      return ItemHelper.actionResultFromType(ToolHelper.mineOreVeinsInAOE(player, hand), stack);
+    }
+    return ActionResult.resultPass(stack);
+  }
 
-	@Override
-	public float getDestroySpeed(@Nonnull ItemStack stack, @Nonnull BlockState state) {
-		if (ToolHelper.canMatterMine(matterType, state.getBlock())) {
-			return 1_200_000;
-		}
-		return super.getDestroySpeed(stack, state) + 48.0F;
-	}
+  @Override
+  public float getDestroySpeed(@Nonnull ItemStack stack, @Nonnull BlockState state) {
+    return super.getDestroySpeed(stack, state) + 48.0F;
+  }
 
-	@Nonnull
-	@Override
-	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(@Nonnull EquipmentSlotType slot, ItemStack stack) {
-		return ToolHelper.addChargeAttributeModifier(super.getAttributeModifiers(slot, stack), slot, stack);
-	}
+  @Nonnull
+  @Override
+  public Multimap<Attribute, AttributeModifier> getAttributeModifiers(@Nonnull EquipmentSlotType slot, ItemStack stack) {
+    return ToolHelper.addChargeAttributeModifier(super.getAttributeModifiers(slot, stack), slot, stack);
+  }
 }

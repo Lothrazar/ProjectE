@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[${loader_version},)"
+loaderVersion="[26,)"
 issueTrackerURL="https://github.com/sinkillerj/ProjectE/issues"
 license="MIT"
 
@@ -17,10 +17,10 @@ license="MIT"
 [[dependencies.projecte]]
   modId="minecraft"
   mandatory=true
-  versionRange="[${mc_version}]"
+  versionRange="[1.16.2,)"
   side="BOTH"
 [[dependencies.projecte]]
   modId="forge"
   mandatory=true
-  versionRange="[${forge_version},)"
+  versionRange="[33,)"
   side="BOTH"
